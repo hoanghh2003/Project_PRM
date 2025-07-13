@@ -38,7 +38,6 @@ public class CartActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerViewCart);
         txtTotal = findViewById(R.id.txtTotalPrice);
         btnCheckout = findViewById(R.id.btnCheckout);
-
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         cartAdapter = new CartAdapter(cartItems);
         recyclerView.setAdapter(cartAdapter);

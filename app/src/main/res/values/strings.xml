@@ -43,4 +43,10 @@
         libero vel nunc consequat, quis tincidunt nisl eleifend. Cras bibendum enim a justo luctus
         vestibulum. Fusce dictum libero quis erat maximus, vitae volutpat diam dignissim.
     </string>
+        <string name="back">Quay lại</string>
+        <string name="products">Sản phẩm</string>
+        <string name="logo">Logo thương hiệu</string>
+        <string name="search_placeholder">Tìm kiếm thức uống...</string>
+
+
 </resources>

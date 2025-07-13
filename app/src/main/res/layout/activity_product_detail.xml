@@ -2,20 +2,28 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"> <!-- Thêm dòng này để tránh cắt chiều cao -->
+    android:fillViewport="true"
+    android:background="#FFF8F3">
 
     <LinearLayout
         android:orientation="vertical"
         android:padding="16dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        android:layout_margin="12dp"
+        android:backgroundTint="#FFFFFF"
+        android:elevation="4dp"
+        android:clipToPadding="false"
+        >
 
         <ImageView
             android:id="@+id/imgDetailProduct"
             android:layout_width="match_parent"
             android:layout_height="250dp"
             android:scaleType="centerCrop"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp"
+            />
 
         <TextView
             android:id="@+id/txtDetailName"
@@ -36,7 +44,7 @@
 
         <TextView
             android:id="@+id/txtDetailPrice"
-            android:textColor="#E91E63"
+            android:textColor="#795548"
             android:textSize="20sp"
             android:textStyle="bold"
             android:layout_marginTop="8dp"
@@ -49,7 +57,7 @@
             android:layout_height="wrap_content"
             android:text="Thêm vào giỏ hàng"
             android:layout_marginTop="24dp"
-            android:backgroundTint="#FF5722"
+            android:backgroundTint="#795548"
             android:textColor="#FFFFFF"
             android:textAllCaps="false"
             android:padding="12dp"

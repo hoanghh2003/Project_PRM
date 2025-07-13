@@ -1,6 +1,10 @@
 package com.example.project.ui;
 import com.example.project.R;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.widget.EditText;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -30,9 +34,20 @@ public class ProductListActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         productList = new ArrayList<>();
-        productAdapter = new ProductAdapter(productList);
+        productAdapter = new ProductAdapter(productList,this);
+        EditText editTextSearch = findViewById(R.id.editTextSearch);
+        editTextSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                productAdapter.getFilter().filter(s); // Gọi filter trong Adapter
+            }
 
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
         recyclerView.setAdapter(productAdapter);
 
         String databaseUrl = getString(R.string.firebase_database_url);
@@ -54,7 +69,7 @@ public class ProductListActivity extends AppCompatActivity {
                     }
                 }
 
-                productAdapter.notifyDataSetChanged();
+                productAdapter.setData(productList);
             }
 
             @Override

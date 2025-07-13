@@ -52,10 +52,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         price = getIntent().getDoubleExtra("price", 0.0);
         imageUrl = getIntent().getStringExtra("imageUrl");
 
-        Log.d("PRODUCT_DETAIL", "ID: " + productId);
-        Log.d("PRODUCT_DETAIL", "Name: " + name);
-        Log.d("PRODUCT_DETAIL", "Price: " + price);
-        Log.d("PRODUCT_DETAIL", "Image: " + imageUrl);
+
 
         // Set dữ liệu lên view
         txtName.setText(name);

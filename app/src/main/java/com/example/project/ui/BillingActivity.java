@@ -3,102 +3,97 @@ package com.example.project.ui;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.project.R;
+import com.example.project.payment.NetworkUtils;
 import com.example.project.payment.VnpayUtil;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+import java.util.UUID;
 
 public class BillingActivity extends AppCompatActivity {
 
     private TextView txtBillingTotal;
-    private Button btnConfirmPayment;
-    private double totalAmount = 0.0;
+    private Button   btnConfirmPayment;
+    private double   totalAmount;
 
-    // ⚠️ Thay thế bằng return URL của bạn (bắt buộc có trên cổng VNPAY sandbox)
+    /* ---- CẤU HÌNH VNPAY SANDBOX ---- */
+    private static final String VNP_TMNCODE    = "7OENGDF3";
+    private static final String VNP_HASH       = "CR9DZLQ3HHLBEUGOMKKGU2FZ59CSAMZ4";
+    private static final String VNP_BASE_URL   = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
     private static final String VNP_RETURN_URL = "https://yourapp.com/return";
+    /* --------------------------------- */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_billing);
 
-        txtBillingTotal = findViewById(R.id.txtBillingTotal);
+        txtBillingTotal   = findViewById(R.id.txtBillingTotal);
         btnConfirmPayment = findViewById(R.id.btnConfirmPayment);
 
-        // ✅ Lấy tổng tiền từ Intent
         totalAmount = getIntent().getDoubleExtra("total", 0.0);
         txtBillingTotal.setText("Tổng: " + String.format("%,.0f", totalAmount) + " VND");
 
-        // ✅ Bắt sự kiện nút thanh toán
         btnConfirmPayment.setOnClickListener(v -> handleVnpayPayment());
     }
 
     private void handleVnpayPayment() {
         try {
-            // ✅ Chuyển tiền sang định dạng chuỗi, không có phần thập phân
-            String amount = String.valueOf((long) totalAmount); // VD: 15000
+            long amount = (long) (totalAmount * 100);               // ×100
+            String txnRef = UUID.randomUUID().toString()
+                    .replace("-", "")
+                    .substring(0, 18);
 
-            // ✅ Tạo mã giao dịch (random theo thời gian)
-            String orderId = String.valueOf(System.currentTimeMillis());
+            /* Thời gian GMT+7 */
+            SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMddHHmmss", Locale.US);
+            fmt.setTimeZone(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+            String createDate = fmt.format(new Date());
+            String expireDate = fmt.format(new Date(System.currentTimeMillis() + 15 * 60 * 1000));
 
-            // ✅ Thông tin hiển thị trên VNPAY
-            String orderInfo = "Thanh toán đơn hàng #" + orderId;
+            String ipAddr = NetworkUtils.getIPAddress();
 
-            // ✅ Thông tin VNPAY sandbox
-            String vnp_TmnCode = "7OENGDF3";
-            String vnp_HashSecret = "CR9DZLQ3HHLBEUGOMKKGU2FZ59CSAMZ4";
-            String vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+            /* Build URL */
+            VnpayUtil vnp = new VnpayUtil();
+            vnp.addRequestData("vnp_Version",   "2.1.0");
+            vnp.addRequestData("vnp_Command",   "pay");
+            vnp.addRequestData("vnp_TmnCode",   VNP_TMNCODE);
+            vnp.addRequestData("vnp_Amount",    String.valueOf(amount));
+            vnp.addRequestData("vnp_CreateDate", createDate);
+            vnp.addRequestData("vnp_ExpireDate", expireDate);
+            vnp.addRequestData("vnp_CurrCode",  "VND");
+            vnp.addRequestData("vnp_IpAddr",    ipAddr);
+            vnp.addRequestData("vnp_Locale",    "vn");
+            vnp.addRequestData("vnp_OrderInfo", "Thanh toán đơn hàng #" + txnRef);
+            vnp.addRequestData("vnp_OrderType", "other");
+            vnp.addRequestData("vnp_ReturnUrl", VNP_RETURN_URL);
+            vnp.addRequestData("vnp_TxnRef",    txnRef);
 
-            // ✅ Gọi hàm tạo URL thanh toán
-            String paymentUrl = VnpayUtil.buildCheckoutUrl(
-                    amount,
-                    orderInfo,
-                    orderId,
-                    vnp_TmnCode,
-                    vnp_HashSecret,
-                    vnp_Url,
-                    VNP_RETURN_URL
-            );
+            String payUrl = vnp.createRequestUrl(VNP_BASE_URL, VNP_HASH);
 
-            if (paymentUrl != null) {
-                // ✅ Mở trình duyệt để thanh toán
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(paymentUrl));
-                startActivity(browserIntent);
-            } else {
-                Toast.makeText(this, "Không thể tạo liên kết thanh toán.", Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Lỗi xử lý thanh toán: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            /* Log để đối chiếu */
+            Log.d("VNPAY", "CreateDate: " + createDate);
+            Log.d("VNPAY", "ExpireDate: " + expireDate);
+            Log.d("VNPAY", "TxnRef    : " + txnRef);
+            Log.d("VNPAY", "IpAddr    : " + ipAddr);
+            Log.d("VNPAY", "PayURL    : " + payUrl);
+
+            /* Mở VNPAY */
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(payUrl)));
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            Toast.makeText(this,
+                    "Lỗi tạo link thanh toán: " + ex.getMessage(),
+                    Toast.LENGTH_LONG).show();
         }
-    }
-
-    /**
-     * ✅ OPTIONAL: Xóa giỏ hàng sau khi thanh toán (chỉ gọi sau khi xác minh callback)
-     */
-    private void clearCartAfterPayment() {
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-        DatabaseReference userCartRef = FirebaseDatabase
-                .getInstance("https://productsaleapp-65d39-default-rtdb.asia-southeast1.firebasedatabase.app")
-                .getReference("users")
-                .child(userId)
-                .child("cart");
-
-        userCartRef.removeValue().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                Toast.makeText(BillingActivity.this, "Thanh toán thành công!", Toast.LENGTH_LONG).show();
-                finish();
-            } else {
-                Toast.makeText(BillingActivity.this, "Lỗi khi xử lý thanh toán.", Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 }
